@@ -67,7 +67,7 @@ class AlertController extends BaseController {
     let dates: string[] = [];
     let pressures: Number[] = [];
     objectArray.forEach((elem) => {
-      dates.push(elem.DateTime.toDateString());
+      dates.push("");
       pressures.push(elem.Pressure);
     });
     let res = { dates: dates, pressures: pressures };
