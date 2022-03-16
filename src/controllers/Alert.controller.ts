@@ -3,27 +3,33 @@ import ChartDataModel from "../models/ChartData.model";
 import { AlertStatus } from "../utils/AlertStatus";
 import BaseController from "./Base.controller";
 import QuickChart from "quickchart-js";
+import mongoose from "mongoose";
 
 class AlertController extends BaseController {
   public postNewAlert = async (newAlert: any) => {
     const currDate = newAlert.DateTime;
     const lastMonthDate = this.getLastMonthDate(newAlert.DateTime);
-    console.log("After", currDate);
-    console.log(lastMonthDate);
     const oneMonthData = await this.getOneMonthData(
       lastMonthDate,
       currDate,
       newAlert.RegName
     );
 
+    const objectID = new mongoose.Types.ObjectId();
+    console.log(objectID);
+    // let patternId = objectID.toString().replace(/\D/g, "").slice(0, 5);
+    let patternId = objectID.toString();
+    console.log(patternId);
+
     const chartPreviewURL = this.generateChartPreview(oneMonthData);
 
     const newAlertData = new AlertModel({
-      patternName: "",
-      patternId: "",
+      __id: objectID,
+      patternName: "CA" + patternId.slice(0, 5),
+      patternId: patternId,
       preview: chartPreviewURL,
       date: newAlert.DateTime,
-      location: "",
+      location: "CA" + patternId.slice(0, 5),
       regulator: newAlert.RegName,
       status: AlertStatus.Pending,
     });
@@ -33,13 +39,38 @@ class AlertController extends BaseController {
   private generateChartPreview = (datePressure: any) => {
     let chartPreview = new QuickChart();
     console.log("CHART", datePressure);
-    chartPreview.setConfig({
-      type: "line",
-      data: {
-        labels: datePressure.dates,
-        datasets: [{ data: datePressure.pressures }],
-      },
-    });
+    chartPreview
+      .setConfig({
+        type: "line",
+        data: {
+          labels: datePressure.dates,
+          datasets: [
+            {
+              data: datePressure.pressures,
+              fill: false,
+              backgroundColor: "rgba(96,110,255,255)",
+              borderWidth: 5,
+            },
+          ],
+        },
+        options: {
+          legend: { display: false },
+          scales: {
+            yAxes: [
+              {
+                gridLines: { color: "rgba(255, 255, 255, 255)" },
+                display: false,
+              },
+            ],
+            xAxes: [
+              {
+                gridLines: { color: "rgba(255, 255, 255, 255)" },
+              },
+            ],
+          },
+        },
+      })
+      .setBackgroundColor("rgba(227,235,247,255)");
     console.log(chartPreview.getUrl());
     return chartPreview.getUrl();
   };
@@ -47,7 +78,6 @@ class AlertController extends BaseController {
   private getLastMonthDate = (newAlertDate: Date) => {
     let lastMonthDate = new Date(newAlertDate.getTime());
     lastMonthDate.setMonth(newAlertDate.getMonth() - 1);
-    console.log("LAST MONTH", lastMonthDate);
     return lastMonthDate;
   };
 
